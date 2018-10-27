@@ -46,6 +46,8 @@ class FBCrawler {
 		login();
 		navigate(targetUrl + "/posts");
 		new Actions(browser).sendKeys(Keys.ESCAPE).build().perform();
+		new Actions(browser).sendKeys(Keys.ESCAPE).build().perform();
+		new Actions(browser).sendKeys(Keys.ESCAPE).build().perform();
 	}
 
 	public void doCrawling() {				
@@ -135,7 +137,6 @@ class FBCrawler {
 	private void getPostsCommentsCount() {
 		List<WebElement> footer_comment;
 		String text_comment;
-		System.out.println("Get Count\nPhase 1");
 		for (int i = 0; i < listPosts.size(); i++) {
 			footer_comment = listPosts.get(i).findElements(By.cssSelector(".fcg.UFIPagerCount"));						
 			if ((footer_comment.size() == 0) || (result.get(i).getID().equals("cantgetid"))) {
@@ -152,7 +153,6 @@ class FBCrawler {
 
 		for (int i = 0; i < listPosts.size(); i++) {
 			if (result.get(i).getCommentsCount() == 0) {
-				System.out.println(i);
 				try {
 					text_comment = listPosts.get(i).findElement(By.cssSelector("._ipm")).getAttribute("innerText");
 					if (!text_comment.contains("Comments")) {
