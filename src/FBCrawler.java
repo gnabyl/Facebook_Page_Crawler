@@ -15,6 +15,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 class CustomCondition {
@@ -77,6 +78,7 @@ class FBCrawler {
 			System.out.println(total + " " + listPosts.size());
 		} while (total < 10000);		
 		outputData();
+		logout();
 		browser.close();	
 	}
 
@@ -84,6 +86,15 @@ class FBCrawler {
 		browser.findElement(By.id("email")).sendKeys(username);
 		browser.findElement(By.id("pass")).sendKeys(password);
 		browser.findElement(By.id("loginbutton")).click();
+	}
+	
+	private void logout() {
+		browser.findElement(By.id("userNavigationLabel")).click();
+		WebDriverWait wait = new WebDriverWait(browser, 100000);
+		wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("._54nh")));
+		List<WebElement> menu = browser.findElements(By.cssSelector("._54nh"));
+		WebElement logoutButton = menu.get(menu.size() - 1);
+		logoutButton.click();
 	}
 
 	private int getListPosts() {	
