@@ -36,15 +36,12 @@ public class Main {
 					line = line.substring(0, line.length() - 1);
 				threadPool.submit(new CrawlingTask(username, password, "https://www.facebook.com", line, outputFolder));
 			}
+			threadPool.shutdown();
 			br.close();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-		
-		
+		}		
 	}
 }

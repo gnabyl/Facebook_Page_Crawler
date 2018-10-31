@@ -4,30 +4,42 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
+import org.openqa.selenium.NoAlertPresentException;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+class CustomCondition {
+	public static ExpectedCondition<Boolean> customCondition() {
+		return new ExpectedCondition<Boolean>() {
+
+			@Override
+			public Boolean apply(WebDriver browser) {
+				JavascriptExecutor jex = (JavascriptExecutor) browser;
+				return (Boolean) jex.executeScript("return ((document.documentElement.scrollHeight - document.documentElement.scrollTop - document.documentElement.clientHeight) > 100);");			
+			}
+			
+		};
+		
+	}
+}
+
 
 class FBCrawler {
 	String hostUrl, targetUrl, username, password;
 	WebDriver browser = new ChromeDriver();
-	List<WebElement> listPosts;
+	List<WebElement> listPosts = new ArrayList<>();
 	ArrayList<CrawlerResult> result = new ArrayList<>();
-	String outputFolder;
+	String outputFolder;	
 
-	String url;
-	String splited[];
-	boolean found;
-		
-
-	public void setBrowser(WebDriver browser) {
-		this.browser = browser;		
-	}
 
 	public FBCrawler(String hostUrl, String targetUrl, String username, String password, String outputFolder) {
 		this.hostUrl = hostUrl;
@@ -37,7 +49,7 @@ class FBCrawler {
 		this.outputFolder = outputFolder;
 	}
 
-	private void navigate(String url) {
+	private void navigate(String url) {	
 		browser.navigate().to(url);
 	}
 	
@@ -46,26 +58,31 @@ class FBCrawler {
 		login();
 		navigate(targetUrl + "/posts");
 		new Actions(browser).sendKeys(Keys.ESCAPE).build().perform();
-		new Actions(browser).sendKeys(Keys.ESCAPE).build().perform();
-		new Actions(browser).sendKeys(Keys.ESCAPE).build().perform();
+		try {
+			Alert alertBox = browser.switchTo().alert();
+			alertBox.dismiss();
+		} catch (NoAlertPresentException e) {
+			System.out.println("Alert passed");
+		}
 	}
 
-	public void doCrawling() {				
+	public void doCrawling() {
+		int total = 0, currentPostCursor = 0, newPostCount;
 		do {
-			getListPosts();
-			getPostsID();
-			getPostsCommentsCount();
+			newPostCount = getListPosts();
+			getPostsID(currentPostCursor);
+			total += getPostsCommentsCount(currentPostCursor);
 			loadMore();
-		} while (getSumOfComments() < 10000);		
+			currentPostCursor += newPostCount;
+			System.out.println(total + " " + listPosts.size());
+		} while (total < 10000);		
 		outputData();
 		browser.close();	
 	}
 
 	private void outputData() {
-		FileWriter fw = null;
-		try {
-			
-			fw = new FileWriter(new File(outputFolder + "/" + targetUrl.substring(targetUrl.lastIndexOf('/') + 1)) + ".csv");
+		try {			
+			FileWriter fw = new FileWriter(new File(outputFolder + "/" + targetUrl.substring(targetUrl.lastIndexOf('/') + 1)) + ".csv");
 			int currentCount = 0;
 			for (CrawlerResult r : result) {
 				if (r.getID().equals("cantgetid"))
@@ -78,19 +95,8 @@ class FBCrawler {
 			fw.flush();
 			fw.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-
-	private int getSumOfComments() {
-		int res = 0;
-		for (CrawlerResult r : result) {
-			if (r.getID().equals("cantgetid"))
-				continue;
-			res += r.getCommentsCount();			
-		}
-		return res;
 	}
 
 	private void login() {
@@ -99,18 +105,31 @@ class FBCrawler {
 		browser.findElement(By.id("loginbutton")).click();
 	}
 
-	private void getListPosts() {		
-		listPosts = browser.findElements(By.cssSelector("._1xnd > ._4-u2._4-u8"));
+	private int getListPosts() {	
+		List<WebElement> newBLocks = browser.findElements(By.cssSelector("._1xnd"));
+		List<WebElement> newPosts = newBLocks.get(newBLocks.size() - 1).findElements(By.cssSelector("._1xnd > ._4-u2 ._4-u8"));
+		listPosts.addAll(newPosts);
+		return newPosts.size();
 	}
 
 	private void loadMore() {
 		JavascriptExecutor jex = (JavascriptExecutor) browser;
-		jex.executeScript("window.scrollTo(0, document.body.scrollHeight)");
+		jex.executeScript("window.scroll(0, document.documentElement.scrollHeight)");
+		WebDriverWait wait = new WebDriverWait(browser, 10000);
+		try {
+			wait.until(CustomCondition.customCondition());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
-	private void getPostsID() {
-		result.clear();
-		for (WebElement element : listPosts) {
+	private void getPostsID(int currentCursor) {
+		String url;
+		String splited[];
+		boolean found;
+		
+		for (int i = currentCursor; i < listPosts.size(); i ++) {
+			WebElement element = listPosts.get(i);
 			CrawlerResult currentResult = new CrawlerResult();
 			List<WebElement> idSelector = element.findElements(By.cssSelector("._5pcq"));
 			if (idSelector.size() == 0)
@@ -134,10 +153,11 @@ class FBCrawler {
 		}
 	}
 
-	private void getPostsCommentsCount() {
+	private int getPostsCommentsCount(int currentCursor) {
+		int total = 0;
 		List<WebElement> footer_comment;
 		String text_comment;
-		for (int i = 0; i < listPosts.size(); i++) {
+		for (int i = currentCursor; i < listPosts.size(); i++) {
 			footer_comment = listPosts.get(i).findElements(By.cssSelector(".fcg.UFIPagerCount"));						
 			if ((footer_comment.size() == 0) || (result.get(i).getID().equals("cantgetid"))) {
 				result.get(i).setCommentsCount(0);
@@ -149,6 +169,7 @@ class FBCrawler {
 			else
 				result.get(i).setCommentsCount(Integer.parseInt(text_comment
 						.substring(text_comment.indexOf("of ") + 3, text_comment.length()).replace(",", "")));
+			total += result.get(i).getCommentsCount();
 		}		
 
 		for (int i = 0; i < listPosts.size(); i++) {
@@ -162,9 +183,11 @@ class FBCrawler {
 					result.get(i).setCommentsCount(Integer.parseInt(text_comment.substring(0, text_comment.indexOf(" "))));
 				} catch (NoSuchElementException e) {
 					result.get(i).setCommentsCount(0);
-				}				
+				}
+				total += result.get(i).getCommentsCount();
 			}
 		}
+		return total;
 	}
 
 }
