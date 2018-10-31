@@ -13,20 +13,28 @@ public class Main {
 	static ExecutorService threadPool;
 	
 	public static void main(String args[]) {
-		System.out.println("Username: ");
-		username = sc.nextLine();
-		System.out.println("Password: ");
-		password = sc.nextLine();
-		System.out.println("Number of threads: ");
-		int nThreads = sc.nextInt();
-		threadPool = Executors.newFixedThreadPool(nThreads);
-		
+		if (args.length < 5) {
+			System.out.println("Not enough arguments!");
+			return;
+		}
+			
 		String outputFolder = ".";
 		inputFile = "./fanpage_list.txt";
+		int nThreads = 4;
 		if (args.length != 0) {
 			inputFile = args[0];
 			outputFolder  = args[1];
+			username = args[2];
+			password = args[3];
+			nThreads = Integer.parseInt(args[4]);
 		}
+		
+		System.out.println("Start crawling program with:\n"
+				+ "Input: " + inputFile + "\n"
+						+ "Output: " + outputFolder + "\n"
+								+ "nThreads: " + nThreads);
+		
+		threadPool = Executors.newFixedThreadPool(nThreads);
 		
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(new File(inputFile)));
