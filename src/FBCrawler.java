@@ -53,7 +53,7 @@ class FBCrawler {
 		browser.navigate().to(url);
 	}
 	
-	public void startCrawler() {
+	public void initCrawler() {
 		navigate(hostUrl);
 		login();
 		navigate(targetUrl + "/posts");
@@ -80,25 +80,6 @@ class FBCrawler {
 		browser.close();	
 	}
 
-	private void outputData() {
-		try {			
-			FileWriter fw = new FileWriter(new File(outputFolder + "/" + targetUrl.substring(targetUrl.lastIndexOf('/') + 1)) + ".csv");
-			int currentCount = 0;
-			for (CrawlerResult r : result) {
-				if (r.getID().equals("cantgetid"))
-					continue;
-				fw.write(r.getID() + "," + r.getCommentsCount() + "\n");
-				currentCount += r.getCommentsCount();
-				if (currentCount >= 10000)
-					break;
-			}
-			fw.flush();
-			fw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	private void login() {
 		browser.findElement(By.id("email")).sendKeys(username);
 		browser.findElement(By.id("pass")).sendKeys(password);
@@ -112,17 +93,7 @@ class FBCrawler {
 		return newPosts.size();
 	}
 
-	private void loadMore() {
-		JavascriptExecutor jex = (JavascriptExecutor) browser;
-		jex.executeScript("window.scroll(0, document.documentElement.scrollHeight)");
-		WebDriverWait wait = new WebDriverWait(browser, 10000);
-		try {
-			wait.until(CustomCondition.customCondition());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
+	
 	private void getPostsID(int currentCursor) {
 		String url;
 		String splited[];
@@ -188,6 +159,36 @@ class FBCrawler {
 			}
 		}
 		return total;
+	}
+	
+	private void loadMore() {
+		JavascriptExecutor jex = (JavascriptExecutor) browser;
+		jex.executeScript("window.scroll(0, document.documentElement.scrollHeight)");
+		WebDriverWait wait = new WebDriverWait(browser, 10000);
+		try {
+			wait.until(CustomCondition.customCondition());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void outputData() {
+		try {			
+			FileWriter fw = new FileWriter(new File(outputFolder + "/" + targetUrl.substring(targetUrl.lastIndexOf('/') + 1)) + ".csv");
+			int currentCount = 0;
+			for (CrawlerResult r : result) {
+				if (r.getID().equals("cantgetid"))
+					continue;
+				fw.write(r.getID() + "," + r.getCommentsCount() + "\n");
+				currentCount += r.getCommentsCount();
+				if (currentCount >= 10000)
+					break;
+			}
+			fw.flush();
+			fw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

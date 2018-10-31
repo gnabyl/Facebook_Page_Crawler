@@ -14,7 +14,7 @@ class CrawlingTask implements Runnable {
 	@Override
 	public void run() {
 		FBCrawler crawler = new FBCrawler(hostUrl, targetUrl, username, password, outputFolder);
-		crawler.startCrawler();
+		crawler.initCrawler();
 		crawler.doCrawling();
 	}
 	
