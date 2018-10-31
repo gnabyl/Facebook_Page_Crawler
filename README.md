@@ -3,7 +3,5 @@ Get list of post_id,comments_count until reach 10000 comments
 
 ## Usage: 
 ```
-<command> [<input_file> <output_folder>]
+<executor_name> <input_file> <output_folder> <username> <password> <num_of_threads>
 ```
-<b>default input_file:</b> ./fanpage_list.txt <br>
-<b>default output_folder:</b> .
