@@ -172,6 +172,11 @@ class FBCrawler {
 		return total;
 	}
 	
+	private void cleanLoadedPosts() {
+		JavascriptExecutor jex = (JavascriptExecutor) browser;
+		jex.executeScript("return document.querySelector(\"._1xnd\").remove()");
+	}
+	
 	private void loadMore() {
 		JavascriptExecutor jex = (JavascriptExecutor) browser;
 		jex.executeScript("window.scroll(0, document.documentElement.scrollHeight)");
@@ -182,6 +187,7 @@ class FBCrawler {
 			e.printStackTrace();
 		}
 	}
+	
 	
 	private void outputData() {
 		try {			
